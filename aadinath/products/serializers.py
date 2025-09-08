@@ -12,3 +12,16 @@ class product_serializer(serializers.ModelSerializer):
     class Meta:
         model = Products
         fields = '__all__'
+        
+    def to_representation(self, instance):
+          """Add absolute URLs for files in the response."""
+          representation = super().to_representation(instance)
+          request = self.context.get('request')
+
+          if instance.image and hasattr(instance.image, 'url'):
+               representation['image'] = request.build_absolute_uri(instance.image.url)
+          else:
+               representation['image'] = None
+
+          return representation
+

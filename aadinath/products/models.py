@@ -11,7 +11,7 @@ class Products(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-    image = models.ImageField(upload_to='products/images/')
+    image = models.ImageField(upload_to='product_images/', blank=True, null=True)
     images = models.JSONField(default=list, blank=True, null=True)  # List of image URLs or file paths
 
     rating = models.FloatField()
