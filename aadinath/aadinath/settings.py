@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'corsheaders',  # Add this line
     'admins',
-    # 'products',
+    'products',
 ]
 
 MIDDLEWARE = [
@@ -125,6 +125,24 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# // ...existing code...
 # CORS settings - Allow all origins (WARNING: Only use in development)
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+# drf-yasg settings
+SWAGGER_SETTINGS = {
+    'DEFAULT_FIELD_INSPECTORS': [
+        'drf_yasg.inspectors.CamelCaseJSONFilter',
+        'drf_yasg.inspectors.InlineSerializerInspector',
+        'drf_yasg.inspectors.RelatedFieldInspector',
+        'drf_yasg.inspectors.ChoiceFieldInspector',
+        'drf_yasg.inspectors.FileFieldInspector',
+        'drf_yasg.inspectors.DictFieldInspector',
+        'drf_yasg.inspectors.JSONFieldInspector',
+        'drf_yasg.inspectors.StringDefaultFieldInspector',
+        'drf_yasg.inspectors.CoreAPICompatInspector', # Keep this for compatibility
+    ],
+    'USE_SESSION_AUTH': False, # It's good practice to disable this for token-based auth
+    'COERCE_DECIMAL_TO_STRING': False, # This is the key setting for your original problem
+}
