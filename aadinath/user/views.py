@@ -155,7 +155,7 @@ class User_API(BaseCRUDViewSet):
                 return error_response('No data provided.', code=status.HTTP_400_BAD_REQUEST)
 
             # Check required fields
-            for field in ['email', 'password']:
+            for field in ['email', 'password','username']:
                 if not data.get(field):
                     return error_response(f'Missing field: {field}', code=status.HTTP_400_BAD_REQUEST)
 
