@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'corsheaders',  # Add this line
     'admins',
     'products',
+    'user',
 ]
 
 MIDDLEWARE = [
