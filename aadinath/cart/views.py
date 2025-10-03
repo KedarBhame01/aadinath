@@ -29,68 +29,112 @@ logger = logging.getLogger(__name__)
     
 
 
-class Cart_API(BaseCRUDViewSet):
+class Cart_API(ModelViewSet):
     queryset = Cart.objects.all()
     serializer_class = User_serializer 
     
-    # @swagger_auto_schema(
-    #     methods=['post'],
-    #     request_body=User_search_serializer,
-    #     responses={200: User_login_serializer(many=True)}
-    # )
-    # @action(detail=False, methods=['post'], url_path='search')
-    # def search(self, request, *args, **kwargs):
-    #         try:
-    #             search_term = request.data.get('search_term')
-    #             if not search_term:
-    #                     return Response({"message": "Please provide a search term"},
-    #                                     status=status.HTTP_400_BAD_REQUEST)
-    #             search_in = request.data.get('search_in').lower()
-                
-               
-    #             search_results = User.objects.none()
-    #             if search_in == 'email':
-    #                     search_results = User.objects.filter(email=search_term)
-                
-    #             if not search_results.exists():
-    #                 return error_response(
-    #                 f"No user found matching '{search_term}' in {search_in}"
-    #                 )
-    #             serializer = User_serializer(search_results, many=True)
+    def cart_user_list(self, request,user, *args, **kwargs):
+        try:
+            queryset = self.get_queryset().filter(user_id=user)
+            if not queryset.exists():
+                return error_response(f"No cart records found for user id {user}", code=status.HTTP_404_NOT_FOUND)
+            serializer = self.get_serializer(queryset, many=True)
+            return success_response("Filtered cart records", serializer.data, code=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(f"Error fetching filtered cart records: {e}", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # ✅ List
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            return success_response("All records fetched", serializer.data)
+        except Exception as e:
+            return error_response(f"Error fetching list: {e}", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    #             return success_response("Search results", serializer.data)
-    #         except Exception as e:
-    #             return error_response(f"Error searching admin: {e}")   
-    
-    # def create(self, request, *args, **kwargs):
-    #     try:
-    #         data = request.data
-    #         if not data:
-    #             return error_response('No data provided.', code=status.HTTP_400_BAD_REQUEST)
 
-    #         # Check required fields
-    #         for field in ['email', 'password']:
-    #             if not data.get(field):
-    #                 return error_response(f'Missing field: {field}', code=status.HTTP_400_BAD_REQUEST)
+    # ✅ Retrieve
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return success_response("Cart record fetched", serializer.data)
+        except Cart.DoesNotExist:
+            return error_response("Cart record not found", code=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return error_response(f"Error fetching record: {e}", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    #         # Check if username exists
-    #         if User.objects.filter(email=data['email']).exists():
-    #             return error_response('user already exists.', code=status.HTTP_409_CONFLICT)
+    # ✅ Create
+    def create(self, request, *args, **kwargs):
+        user_id = request.data.get('user')
+        product_id = request.data.get('product')
+        try:
+            cart_item = Cart.objects.filter(user_id=user_id, product_id=product_id).first()
+            if cart_item:
+                cart_item.quantity = cart_item.quantity + 1
+                cart_item.save()
+                return Response({
+                    "message": "Existing cart item, quantity increased",
+                    "cart_item": self.get_serializer(cart_item).data
+                }, status=status.HTTP_200_OK)
+            else:
+                serializer = self.get_serializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response({
+                    "message": "New cart item created",
+                    "cart_item": serializer.data
+                }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({
+                "message": f"Error: {e}"
+            }, status=status.HTTP_400_BAD_REQUEST)
+    # ✅ Update
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            new_user_id = request.data.get('user', instance.user)
+            new_product_id = request.data.get('product', instance.product)
+            # Prevent duplicate (user, product)
+            existing = Cart.objects.filter(user_id=new_user_id, product_id=new_product_id).exclude(pk=instance.pk).first()
+            if existing:
+                # Optional: combine quantities instead, or raise error
+                existing.quantity = request.data.get('quantity', 1)
+                existing.save()
+                instance.delete()  # Remove old record to keep unique
+                return success_response("Combined with existing cart item", self.get_serializer(existing).data)
+            serializer = self.get_serializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return success_response("Record updated successfully", serializer.data)
+        except Exception as e:
+            return error_response(f"Error updating record: {e}")
 
-    #         # Hash password
-    #         data = data.copy()
-    #         data['password'] = make_password(data['password'])
+    # ✅ Partial Update
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            new_user_id = request.data.get('user', instance.user)
+            new_product_id = request.data.get('product', instance.product)
+            existing = Cart.objects.filter(user_id=new_user_id, product_id=new_product_id).exclude(pk=instance.pk).first()
+            if existing:
+                existing.quantity = request.data.get('quantity', 1)
+                existing.save()
+                instance.delete()
+                return success_response("Combined with existing cart item (partial)", self.get_serializer(existing).data)
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return success_response("Record partially updated successfully", serializer.data)
+        except Exception as e:
+            return error_response(f"Error in partial update: {e}")
 
-    #         serializer = self.get_serializer(data=data)
-    #         serializer.is_valid(raise_exception=True)
-    #         serializer.save()
+    # ✅ Destroy
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.delete()
+            return success_response("Record deleted successfully")
+        except Exception as e:
+            return error_response(f"Error deleting record: {e}")
 
-    #         return success_response(
-    #             "user registered successfully",
-    #                                 serializer.data,
-    #                                 code=status.HTTP_201_CREATED
-    #         )
-    #     except Exception as e:
-    #         logger.error(f"Error creating user: {e}")
-    #         return error_response('Registration failed. Please try again later.', code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+   

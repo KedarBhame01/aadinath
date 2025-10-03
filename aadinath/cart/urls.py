@@ -14,7 +14,8 @@ urlpatterns = [
     path('update/<int:pk>/', Cart_API.as_view({'put':'update'})),
     path('delete/<int:pk>/', Cart_API.as_view({'delete':'destroy'})),
     # path('login/', UserLoginAPI.as_view({'post':'login'})),
-    path('search/', Cart_API.as_view({'post':'search'})),
+    # path('search/', Cart_API.as_view({'post':'search'})),
+    path('user/<int:user>/', Cart_API.as_view({'get':'cart_user_list'}), name='cart_user_list'),
     
     
 ]
