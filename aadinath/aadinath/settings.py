@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -170,3 +171,12 @@ SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False, # It's good practice to disable this for token-based auth
     'COERCE_DECIMAL_TO_STRING': False, # This is the key setting for your original problem
 }
+
+
+# Razorpay Configuration
+RAZORPAY_API_KEY = config('RAZORPAY_API_KEY', default='your_test_key_id')
+RAZORPAY_API_SECRET = config('RAZORPAY_API_SECRET', default='your_test_key_secret')
+
+# Or directly (not recommended for production)
+# RAZORPAY_API_KEY = 'rzp_test_your_key_id'
+# RAZORPAY_API_SECRET = 'your_key_secret'
