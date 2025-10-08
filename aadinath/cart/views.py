@@ -9,6 +9,8 @@ from rest_framework import status,filters
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from decouple import config
+
 from .models import Cart
 # for show swagger parameter
 from drf_yasg.utils import swagger_auto_schema
@@ -137,4 +139,12 @@ class Cart_API(ModelViewSet):
         except Exception as e:
             return error_response(f"Error deleting record: {e}")
 
-   
+
+
+# Razorpay Configuration
+RAZORPAY_API_KEY = config('RAZORPAY_API_KEY', default='your_test_key_id')
+RAZORPAY_API_SECRET = config('RAZORPAY_API_SECRET', default='your_test_key_secret')
+
+# Or directly (not recommended for production)
+# RAZORPAY_API_KEY = 'rzp_test_your_key_id'
+# RAZORPAY_API_SECRET = 'your_key_secret'  
